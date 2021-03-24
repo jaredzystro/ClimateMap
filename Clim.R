@@ -37,9 +37,12 @@ ui <- fluidPage(
   div(id="disp_map", HTML("<br><p><b>A map will load below with the locations that have current climates similar to your future climate. 
                           <br>Green and yellow shading are locations that are more similar.</b></p><br>")),
   plotOutput("AnalogPlot",width = "100%", height = "800px"),
-  div(HTML("Code based on analogues R package from Julian Ramirez of CIAT, 
-            using current data from worldclim, future data from CMIP5, 
-           using the 8.5 relative concentration BCC-CSM1.1 climate model"))
+  div(HTML("<a href='https://github.com/jaredzystro/ClimateMap'>Code</a> 
+            based on <a href='https://github.com/CIAT-DAPA/analogues'>analogues</a> 
+            R package from <a href='https://ccafs.cgiar.org/people/julian-ramirez-villegas'>Julian Ramirez</a> 
+            of CIAT, using current data from <a href='https://www.worldclim.org/'>worldclim</a>, 
+            future data from <a href='https://pcmdi.llnl.gov/mips/cmip5/'>CMIP5</a>, 
+            using the 8.5 relative concentration <a href='https://www.nature.com/articles/s41597-019-0343-8/tables/2'>BCC-CSM1.1 climate model</a>"))
 )
 
 server <- function(input, output, session) {
