@@ -7,15 +7,16 @@ library(maptools)
 data("wrld_simpl")
 library(leaflet.extras)
 
-r_colors <- rgb(t(col2rgb(colors()) / 255))
-names(r_colors) <- colors()
-
 ui <- fluidPage(
+  
+  # Intro
   div(id="intro", HTML("<h2>Future Climate Analogs Map</h2><br><p>
   <h4>This site lets you view a map showing locations that are currently
-  similar to what your location in the future.
+  similar to what your location might look like in the future.
   To use, select how far into future you want to look, and select whether
   you want to compare based on temperature, precipitation, or both.</h4><br></p>")),
+  
+  # Year, similarity, season options
   div(style="display:inline-block",selectInput("year", "Future Year", choices=c("2030","2050","2070"))),
   div(style="display:inline-block",selectInput("startgrow", "Start of the growing season", choices=c("Jan" = 1,"Feb" = 2,"Mar" = 3, 
                                                                       "Apr" = 4, "May" = 5, "Jun" = 6, 
@@ -28,15 +29,20 @@ ui <- fluidPage(
                                                                 "Jul" = 7, "Aug" = 8, "Sep" = 9, 
                                                                 "Oct" = 10, "Nov" = 11, "Dec" = 12), selected = 12)),
   
+  # Map to select location to match
   div(id="sel_map", HTML("<p>Zoom and click on the map to select the location you want to look for analogs for</p>
                          <p style='color:red;'><b>NOTE:</b> Even if you use the address bar to navigate, you must click on the map to set your location</p>")),
   leafletOutput("mymap", width = "100%", height = "300px"),
   div(HTML("<br>")),
   actionButton("submit_button","Create Analog Map"),
  # textOutput("lat"),
+ 
+  # Analog map
   div(id="disp_map", HTML("<br><p><b>A map will load below with the locations that have current climates similar to your future climate. 
                           <br>Green and yellow shading are locations that are more similar.</b></p><br>")),
   plotOutput("AnalogPlot",width = "100%", height = "800px"),
+ 
+  # Info links
   div(HTML("<a href='https://github.com/jaredzystro/ClimateMap'>Code</a> 
             based on <a href='https://github.com/CIAT-DAPA/analogues'>analogues</a> 
             R package from <a href='https://ccafs.cgiar.org/people/julian-ramirez-villegas'>Julian Ramirez</a> 
@@ -47,7 +53,7 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  # map for selecting location
+  # Base map for selecting location
   output$mymap <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$Stamen.TonerLite,
@@ -57,6 +63,7 @@ server <- function(input, output, session) {
     
   })
 
+  # Observe mouse clicks and add marker where clicked 
   observeEvent(input$mymap_click, {
     click = input$mymap_click
     leafletProxy('mymap') %>%
@@ -72,6 +79,7 @@ server <- function(input, output, session) {
 
  output$AnalogPlot <- renderPlot({
    
+   # Wait for button press
    input$submit_button
    
    # Isolate variables
@@ -82,12 +90,12 @@ server <- function(input, output, session) {
    startgrow <- isolate(input$startgrow)
    endgrow <- isolate(input$endgrow)
 
-  # wait for map click  
+   # Wait for map click  
    validate(need(input$submit_button, 'Map will load after location, date, and comparison type are chosen'))
    validate(need(lat, 'Please click on a point on the map and then click the Create Analog Map button'))
    withProgress(message = "Creating analog map: ", value = 0, {
      
-    # get precipitation data
+    # Get precipitation data
     incProgress(0.333, detail = "Loading data")
     if (compare == "Precipitation" ||  compare == "Both") {
       cur_prec <- raster::getData("worldclim", res=10, var="prec", path=".")
@@ -95,25 +103,24 @@ server <- function(input, output, session) {
    }
    
     if (compare == "Temperature" ||  compare == "Both") {
-    cur_temp <- raster::getData("worldclim", res=10, var="tmean", path=".")
-     fut_temp <- getCMIP5(var="tmean", rcp=8.5, model=1, year=as.numeric(year), res=10, path='.')
+      cur_temp <- raster::getData("worldclim", res=10, var="tmean", path=".")
+      fut_temp <- getCMIP5(var="tmean", rcp=8.5, model=1, year=as.numeric(year), res=10, path='.')
    }
   
-  # match up coordinates
-  
-     if (compare == "Temperature") {
-       crs(fut_temp) <- crs(cur_temp) 
-       }
+    # Match up coordinates
+    if (compare == "Temperature") {
+      crs(fut_temp) <- crs(cur_temp) 
+    }
      
-     if (compare == "Precipitation") {
-       crs(fut_prec) <- crs(cur_prec) 
-       }
+    if (compare == "Precipitation") {
+      crs(fut_prec) <- crs(cur_prec) 
+    }
      
-     if (compare == "Both") {
+    if (compare == "Both") {
        crs(fut_temp) <- crs(fut_prec) <- cur_prec
-       }
+    }
   
-  # create parameter object
+    # Create parameter object
     incProgress(0.333, detail = "Creating model")
     if (compare == "Precipitation") {
       params <- createParameters(x=lng, y=lat, vars=c("prec"),weights=c(1),
@@ -137,12 +144,11 @@ server <- function(input, output, session) {
     }
     
   
-    #calculate similarity
+    # Calculate similarity
     sim_out <- calc_similarity(params)
     
-    # plot the result
+    # Plot the result
     incProgress(0.333, detail = "Drawing map")
-    
     plot(sim_out, col = rev(terrain.colors(10)))
     plot(wrld_simpl, add=T)
     
