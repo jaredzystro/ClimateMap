@@ -23,8 +23,8 @@ ui <- fluidPage(
                                                                       "Jul" = 7, "Aug" = 8, "Sep" = 9, 
                                                                       "Oct" = 10, "Nov" = 11, "Dec" = 12), selected = 1)),
   div(HTML("<br>")),
-    div(style="display:inline-block",selectInput("compare","Look for Similarities based on",c("Temperature","Precipitation","Both"))),
-    div(style="display:inline-block",selectInput("endgrow","End of the growing season",choices=c("Jan" = 1,"Feb" = 2,"Mar" = 3, 
+  div(style="display:inline-block",selectInput("compare","Look for Similarities based on",c("Temperature","Precipitation","Both"))),
+  div(style="display:inline-block",selectInput("endgrow","End of the growing season",choices=c("Jan" = 1,"Feb" = 2,"Mar" = 3, 
                                                                 "Apr" = 4, "May" = 5, "Jun" = 6, 
                                                                 "Jul" = 7, "Aug" = 8, "Sep" = 9, 
                                                                 "Oct" = 10, "Nov" = 11, "Dec" = 12), selected = 12)),
@@ -35,7 +35,6 @@ ui <- fluidPage(
   leafletOutput("mymap", width = "100%", height = "300px"),
   div(HTML("<br>")),
   actionButton("submit_button","Create Analog Map"),
- # textOutput("lat"),
  
   # Analog map
   div(id="disp_map", HTML("<br><p><b>A map will load below with the locations that have current climates similar to your future climate. 
@@ -70,12 +69,6 @@ server <- function(input, output, session) {
       clearMarkers() %>%
       addMarkers(lng = click$lng, lat = click$lat)
   })
-  
-  # output$lat <- renderText({
-  #   
-  #   print(c("Latitude: ",input$mymap_click$lat,", Longitude:",input$mymap_click$lng))
-  #   
-  # })
 
  output$AnalogPlot <- renderPlot({
    
